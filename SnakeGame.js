@@ -1,4 +1,14 @@
 const SVGNS = 'http://www.w3.org/2000/svg';
+const svg = document.createElementNS( SVGNS, 'svg' );
+document.body.appendChild( svg );
+
+export const Settings = {
+  GoalWeight: 0.5,
+  AvoidWeight: 100,
+  AvoidPower: 1,
+  DrawForces: false,
+  MinimumAppleDist: 20,
+};
 
 export class Snake {
   x;
@@ -19,8 +29,7 @@ export class Snake {
 
   #color = `hsl( ${ Math.random() * 360 }deg, 50%, 50% )`;
 
-  bodySVG = document.createElementNS( SVGNS, 'path' );
-  forcesSVG = document.createElementNS( SVGNS, 'g' );
+  #bodySVG = document.createElementNS( SVGNS, 'path' );
   #goalForceSVG = document.createElementNS( SVGNS, 'path' );
   #avoidForcesSVG = document.createElementNS( SVGNS, 'path' );
   #finalForceSVG = document.createElementNS( SVGNS, 'path' );
@@ -37,21 +46,22 @@ export class Snake {
 
     this.#tail.push( { x: x, y: y, angle: angle, length: 0 } );
 
-    this.bodySVG.setAttribute( 'class', 'snake' );
-    this.bodySVG.style.fill = this.#color;
+    this.#bodySVG.setAttribute( 'class', 'snake' );
+    this.#bodySVG.style.fill = this.#color;
+    svg.appendChild( this.#bodySVG );
 
     this.#goalForceSVG.setAttribute( 'class', 'goalForce' );
-    this.forcesSVG.appendChild( this.#goalForceSVG );
+    svg.appendChild( this.#goalForceSVG );
 
     this.#avoidForcesSVG.setAttribute( 'class', 'avoidForce' );
-    this.forcesSVG.appendChild( this.#avoidForcesSVG );
+    svg.appendChild( this.#avoidForcesSVG );
 
     this.#finalForceSVG.setAttribute( 'class', 'finalForce' );
-    this.forcesSVG.appendChild( this.#finalForceSVG );
+    svg.appendChild( this.#finalForceSVG );
   }
 
   destroy() {
-    this.bodySVG.remove();
+    this.#bodySVG.remove();
     this.#goalForceSVG.remove();
     this.#avoidForcesSVG.remove();
     this.#finalForceSVG.remove();
@@ -63,7 +73,7 @@ export class Snake {
   distanceTo( other ) { return this.distanceToPoint( other.x, other.y ); }
   distanceToPoint( x, y ) { return Math.hypot( x - this.x, y - this.y ); }
 
-  getVectors( snakes ) {
+  getAvoidVectors( snakes ) {
     const vectors = [];
 
     snakes.forEach( snake => {
@@ -105,6 +115,46 @@ export class Snake {
     }
   }
 
+  getGoalAngle( apples, avoidVectors ) {
+    let closest = apples.map( 
+      apple => ( { apple: apple, dist: this.distanceTo( apple ) } )
+    ).reduce( 
+      ( acc, appleDist ) => 
+        Settings.MinimumAppleDist < appleDist.dist && appleDist.dist < acc.dist ? appleDist : acc,
+      { apple: null, dist: Infinity }
+    );
+
+    const goalX = closest.apple?.x ?? this.wanderX;
+    const goalY = closest.apple?.y ?? this.wanderY;
+
+    // Try to avoid other thiss
+    const weighted = avoidVectors.map( vector => {
+      const weightedDist = Math.abs( Settings.AvoidWeight / Math.pow( vector.dist, Settings.AvoidPower ) );
+      return { 
+        x: Math.cos( vector.angle ) * weightedDist / avoidVectors.length,
+        y: Math.sin( vector.angle ) * weightedDist / avoidVectors.length
+      };
+    } );
+
+    this.drawAvoidForces( weighted );
+
+    const goalAngle = Math.atan2( goalY - this.y, goalX - this.x );
+    const goalForce = {
+      x: Settings.GoalWeight * Math.cos( goalAngle ), 
+      y: Settings.GoalWeight * Math.sin( goalAngle ),
+    }
+
+    this.drawGoalForce( goalForce );
+
+    const finalForce = weighted.reduce(
+      ( acc, wv ) => ( { x: acc.x + wv.x, y: acc.y + wv.y } ),
+      goalForce
+    );
+    this.drawFinalForce( finalForce );
+
+    return Math.atan2( finalForce.y, finalForce.x );
+  }
+
   moveForward( dt ) {
     if ( this.isAlive ) {
       const moveDist = this.speed * dt;
@@ -123,7 +173,7 @@ export class Snake {
       this.#length -= this.#tail.shift().length;
     }
 
-    this.bodySVG.setAttribute( 'd', this.#getDString() );
+    this.#bodySVG.setAttribute( 'd', this.#getDString() );
 
     if ( this.#tail.length == 0 ) {
       this.destroy();
@@ -195,19 +245,21 @@ export class Apple {
   x;
   y;
   size = 10;
-  svg = document.createElementNS( SVGNS, 'circle' );
+  #svg = document.createElementNS( SVGNS, 'circle' );
 
   constructor( x, y ) {
     this.x = x;
     this.y = y;
 
-    this.svg.setAttribute( 'class', 'apple' );
-    this.svg.setAttribute( 'cx', x );
-    this.svg.setAttribute( 'cy', y );
-    this.svg.setAttribute( 'r', this.size );
+    this.#svg.setAttribute( 'class', 'apple' );
+    this.#svg.setAttribute( 'cx', x );
+    this.#svg.setAttribute( 'cy', y );
+    this.#svg.setAttribute( 'r', this.size );
+
+    svg.appendChild( this.#svg );
   }
 
   destroy() {
-    this.svg.remove();
+    this.#svg.remove();
   }
 }

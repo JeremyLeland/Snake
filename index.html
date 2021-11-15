@@ -4,12 +4,13 @@
 
   .message {
     position: absolute;
-    bottom: 50%;
+    top: 50%;
     width: 100%;
     text-align: center;
     font-family: sans-serif;
-    font-size: 50;
   }
+  #bigMessage { position: relative; font-size: 50; }
+  #littleMessage { position: relative; font-size: 30; }
 
   .snake { stroke: black; stroke-width: 2; }
   .apple { fill: red; stroke: black; stroke-width: 2; }
@@ -20,57 +21,40 @@
 </style>
 
 <body>
+  <div class="message">
+    <div class="message" id="bigMessage">Snake</div>
+    <div class="message" id="littleMessage">Click to begin</div>
+  </div>
 </body>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
 <script type="module">
 
-  import { Snake, Apple } from './SnakeGame.js';
-
-  const Settings = {
-    GoalWeight: 0.5,
-    AvoidWeight: 100,
-    AvoidPower: 1,
-    DrawForces: false,
-    MinimumAppleDist: 20,
-  };
-
-
-  const SVGNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS( SVGNS, 'svg' );
-  document.body.appendChild( svg );
-
+  import { Settings, Snake, Apple } from './SnakeGame.js';
 
   const State = { Playing: 1, Win: 2, Lose: 3 };
 
   let snakes = [];
   let apples = [];
   let gameState = State.Playing;
-  const gameMessage = document.body.appendChild( document.createElement( 'div' ) );
-  gameMessage.className = 'message';
 
   function spawnSnake() {
-    const snake = new Snake( 
-      Math.random() * window.innerWidth, 
-      Math.random() * window.innerHeight,
-      Math.random() * Math.PI * 2
+    snakes.push(
+      new Snake( 
+        Math.random() * window.innerWidth, 
+        Math.random() * window.innerHeight,
+        Math.random() * Math.PI * 2
+      )
     );
-    
-    svg.appendChild( snake.bodySVG );
-    svg.appendChild( snake.forcesSVG );
-    
-    snakes.push( snake );
   }
 
   function spawnApple() {
-    const apple = new Apple( 
-      Math.random() * window.innerWidth, 
-      Math.random() * window.innerHeight,
+    apples.push(
+      new Apple( 
+        Math.random() * window.innerWidth, 
+        Math.random() * window.innerHeight,
+      )
     );
-
-    svg.appendChild( apple.svg );
-
-    apples.push( apple );
   }
 
   spawnSnake();
@@ -96,66 +80,21 @@
         return true;
       } );
 
-      const vectors = snake.getVectors( snakes );
+      const avoidVectors = snake.getAvoidVectors( snakes );
 
-      snake.isAlive &= vectors.every( vector => vector.dist > 0 );
+      snake.isAlive &= avoidVectors.every( vector => vector.dist > 0 );
 
       if ( snake == player ) {
         const towardMouse = Math.atan2( mouseY - snake.y, mouseX - snake.x );
         snake.turnTowardAngle( towardMouse, dt );
       }
       else {
-        // Head towards nearest apple we can hit (not too close)
-        // TODO: Remember our heading so we don't steer away from apples when we get close?
-        let closest = apples.map( 
-          apple => ( { apple: apple, dist: snake.distanceTo( apple ) } )
-        ).reduce( 
-          ( acc, appleDist ) => 
-            Settings.MinimumAppleDist < appleDist.dist && appleDist.dist < acc.dist ? appleDist : acc,
-          { apple: null, dist: Infinity }
-        );
-
-        const goalX = closest.apple?.x ?? snake.wanderX;
-        const goalY = closest.apple?.y ?? snake.wanderY;
-
-        // Try to avoid other snakes
-        const weighted = vectors.map( vector => {
-          const weightedDist = Math.abs( Settings.AvoidWeight / Math.pow( vector.dist, Settings.AvoidPower ) );
-          return { 
-            x: Math.cos( vector.angle ) * weightedDist / vectors.length,
-            y: Math.sin( vector.angle ) * weightedDist / vectors.length
-          };
-        } );
-
-        snake.drawAvoidForces( weighted );
-
-        const goalAngle = Math.atan2( goalY - snake.y, goalX - snake.x );
-        const goalForce = {
-          x: Settings.GoalWeight * Math.cos( goalAngle ), 
-          y: Settings.GoalWeight * Math.sin( goalAngle ),
-        }
-
-        snake.drawGoalForce( goalForce );
-
-        const finalForce = weighted.reduce(
-          ( acc, wv ) => ( { x: acc.x + wv.x, y: acc.y + wv.y } ),
-          goalForce
-        );
-        snake.drawFinalForce( finalForce );
-
-        const finalAngle = Math.atan2( finalForce.y, finalForce.x );
-        snake.turnTowardAngle( finalAngle, dt );
+        const towardGoal = snake.getGoalAngle( apples, avoidVectors );
+        snake.turnTowardAngle( towardGoal, dt );
       }
     } );
 
     snakes = snakes.filter( snake => snake.moveForward( dt ) );
-
-    if ( snakes.length == 1 && snakes[0] == player ) {
-      gameMessage.innerText = 'Win!';
-    }
-    else if ( !snakes.includes( player ) ) {
-      gameMessage.innerText = 'Lose!';
-    }
   }
 
 
