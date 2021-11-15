@@ -1,5 +1,9 @@
 <style>
-  body { margin: 0 }
+  body {
+    margin: 0;
+    overscroll-behavior: none; /* Disable Chrome two fingers back/forward swipe */
+    user-select: none;  /* Prevent accidental selection while dragging mouse */
+  }
   svg  { width: 100%; height: 100% }
 
   .message {
@@ -32,20 +36,29 @@
 
   import { Settings, Snake, Apple } from './SnakeGame.js';
 
-  const State = { Playing: 1, Win: 2, Lose: 3 };
+  const State = { Menu: 0, Playing: 1, Lose: 2 };
 
-  let snakes = [];
-  let apples = [];
-  let gameState = State.Playing;
+  let snakes = [], player, apples = [], gameState = State.Menu;
 
-  let player = new Snake();
-  snakes.push( player );
-  setTimeout( spawnSnake, 2000 );  
+  const bigMessage = document.getElementById( 'bigMessage' );
+  const littleMessage = document.getElementById( 'littleMessage' );
+  
+  function newGame() {
+    bigMessage.style.visibility = 'hidden';
+    littleMessage.style.visibility = 'hidden';
+    gameState = State.Playing;
 
-  for ( let i = 0; i < 3; i ++ ) {
-    apples.push( new Apple() );
+    player = new Snake();
+    snakes = [ player ];
+    apples = [];
+    
+    setTimeout( spawnSnake, 2000 );  
+
+    for ( let i = 0; i < 3; i ++ ) {
+      apples.push( new Apple() );
+    }
+    setTimeout( spawnApple, 3000 );
   }
-  setTimeout( spawnApple, 3000 );
 
   function spawnSnake() {
     snakes.push( new Snake() );
@@ -84,6 +97,14 @@
     } );
 
     snakes = snakes.filter( snake => snake.moveForward( dt ) );
+
+    // if ( !player?.isAlive ) {
+    //   bigMessage.innerText = 'Game Over!';
+    //   bigMessage.style.visibility = 'default';
+    //   littleMessage.innerText = 'Click to restart'
+    //   littleMessage.style.visibility = 'default';
+    //   gameState = State.Lose;
+    // }
   }
 
 
@@ -93,14 +114,24 @@
   //   gui.add( Settings, setting );
   // }
 
-  let mouseX = 0, mouseY = 0;
+  //
+  // Input and update loop
+  //
+
+  let mouseX = 0, mouseY = 0, mouseDown = false;
   document.onmousemove = onInput;
   document.ontouchstart = onInput;
   document.ontouchmove = onInput;
+  document.onmousedown = ( e ) => { mouseDown = true; onInput( e ); }
+  document.onmouseup   = ( e ) => mouseDown = false;
   function onInput( e ) {
     const event = e.touches ? e.touches[0] : e;
     mouseX = event.pageX;
     mouseY = event.pageY;
+
+    if ( gameState != State.Playing && mouseDown ) {
+      newGame();
+    }
   }
 
   let keyDown = true;     // default to running
