@@ -38,35 +38,24 @@
   let apples = [];
   let gameState = State.Playing;
 
+  let player = new Snake();
+  snakes.push( player );
+  setTimeout( spawnSnake, 2000 );  
+
+  for ( let i = 0; i < 3; i ++ ) {
+    apples.push( new Apple() );
+  }
+  setTimeout( spawnApple, 3000 );
+
   function spawnSnake() {
-    snakes.push(
-      new Snake( 
-        Math.random() * window.innerWidth, 
-        Math.random() * window.innerHeight,
-        Math.random() * Math.PI * 2
-      )
-    );
+    snakes.push( new Snake() );
+    setTimeout( spawnSnake, 2000 * snakes.length + Math.random() * 5000 );
   }
 
   function spawnApple() {
-    apples.push(
-      new Apple( 
-        Math.random() * window.innerWidth, 
-        Math.random() * window.innerHeight,
-      )
-    );
+    apples.push( new Apple() );
+    setTimeout( spawnApple, Math.random() * 3000 );
   }
-
-  spawnSnake();
-  let player = snakes[ 0 ];
-  setTimeout( spawnSnake, 2000 );
-  setTimeout( spawnSnake, 4000 );
-  
-
-  spawnApple();
-  spawnApple();
-  spawnApple();
-  setInterval( spawnApple, 3000 );
 
   function update( dt ) {
     snakes.forEach( snake => {

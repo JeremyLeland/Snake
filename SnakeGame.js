@@ -34,7 +34,11 @@ export class Snake {
   #avoidForcesSVG = document.createElementNS( SVGNS, 'path' );
   #finalForceSVG = document.createElementNS( SVGNS, 'path' );
 
-  constructor( x, y, angle ) {
+  constructor( 
+    x = Math.random() * window.innerWidth, 
+    y = Math.random() * window.innerHeight, 
+    angle = Math.random() * Math.PI * 2,
+  ) {
     this.x = x;
     this.y = y;
     this.#angle = angle;
@@ -247,7 +251,10 @@ export class Apple {
   size = 10;
   #svg = document.createElementNS( SVGNS, 'circle' );
 
-  constructor( x, y ) {
+  constructor( 
+    x = Math.random() * window.innerWidth, 
+    y = Math.random() * window.innerHeight,
+  ) {
     this.x = x;
     this.y = y;
 
