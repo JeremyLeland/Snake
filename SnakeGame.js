@@ -64,12 +64,17 @@ export class Snake {
     svg.appendChild( this.#finalForceSVG );
   }
 
+  // TODO: Clean up kill vs destroy
   destroy() {
-    //this.#bodySVG.remove();
+    this.#bodySVG.remove();
+    this.#goalForceSVG.remove();
+    this.#avoidForcesSVG.remove();
+    this.#finalForceSVG.remove();
+  }
 
+  kill() {
     this.#bodySVG.classList.add( 'snakeDeath' );
     this.#bodySVG.addEventListener( 'animationend', removeAnimatedElement );
-
     this.#goalForceSVG.remove();
     this.#avoidForcesSVG.remove();
     this.#finalForceSVG.remove();

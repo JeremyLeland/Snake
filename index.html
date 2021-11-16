@@ -16,6 +16,15 @@
   #bigMessage { position: relative; font-size: 50; }
   #littleMessage { position: relative; font-size: 30; }
 
+  .fadeIn {
+    opacity: 0%;
+    animation: fadeIn 1s linear 2s 1 forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0%;   }
+    to   { opacity: 100%; }
+  }
+
   .snake { stroke: black; stroke-width: 2; }
   .apple { fill: red; stroke: black; stroke-width: 2; }
 
@@ -33,7 +42,7 @@
 <body>
   <div class="message">
     <div class="message" id="bigMessage">Snake</div>
-    <div class="message" id="littleMessage">Click to begin</div>
+    <div class="message fadeIn" id="littleMessage">Click to begin</div>
   </div>
 </body>
 
@@ -52,11 +61,18 @@
   function newGame() {
     bigMessage.style.visibility = 'hidden';
     littleMessage.style.visibility = 'hidden';
+    littleMessage.classList.remove( 'fadeIn' );
     gameState = State.Playing;
+
+    snakes.forEach( snake => snake.destroy() );
 
     player = new Snake();
     snakes = [ player ];
+
+    apples.forEach( apple => apple.destroy() );
     apples = [];
+
+    // TODO: Reset old apple/snake spawn timers
     
     setTimeout( spawnSnake, 2000 );  
 
@@ -89,33 +105,31 @@
       } );
 
       const avoidVectors = snake.getAvoidVectors( snakes );
+      const goalAngle = snake == player ? 
+        Math.atan2( mouseY - snake.y, mouseX - snake.x ) : 
+        snake.getGoalAngle( apples, avoidVectors );
 
-      if ( snake == player ) {
-        const towardMouse = Math.atan2( mouseY - snake.y, mouseX - snake.x );
-        snake.turnTowardAngle( towardMouse, dt );
-      }
-      else {
-        const towardGoal = snake.getGoalAngle( apples, avoidVectors );
-        snake.turnTowardAngle( towardGoal, dt );
-      }
+      snake.turnTowardAngle( goalAngle, dt );
 
       if ( avoidVectors.every( vector => vector.dist > 0 ) ) {
         snake.update( dt );
         return true;
       }
       else {
-        snake.destroy();
+        snake.kill();
+
+        if ( snake == player ) {
+          bigMessage.innerText = 'Game Over!';
+          bigMessage.style.visibility = 'initial';
+          littleMessage.innerText = 'Click to restart'
+          littleMessage.style.visibility = 'initial';
+          littleMessage.classList.add( 'fadeIn' );
+          gameState = State.Lose;
+        }
+
         return false;
       }
     } );
-
-    // if ( !player?.isAlive ) {
-    //   bigMessage.innerText = 'Game Over!';
-    //   bigMessage.style.visibility = 'default';
-    //   littleMessage.innerText = 'Click to restart'
-    //   littleMessage.style.visibility = 'default';
-    //   gameState = State.Lose;
-    // }
   }
 
 
