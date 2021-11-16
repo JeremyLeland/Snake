@@ -65,7 +65,11 @@ export class Snake {
   }
 
   destroy() {
-    this.#bodySVG.remove();
+    //this.#bodySVG.remove();
+
+    this.#bodySVG.classList.add( 'snakeDeath' );
+    this.#bodySVG.addEventListener( 'animationend', removeAnimatedElement );
+
     this.#goalForceSVG.remove();
     this.#avoidForcesSVG.remove();
     this.#finalForceSVG.remove();
@@ -159,32 +163,20 @@ export class Snake {
     return Math.atan2( finalForce.y, finalForce.x );
   }
 
-  moveForward( dt ) {
-    if ( this.isAlive ) {
-      const moveDist = this.speed * dt;
+  update( dt ) {
+    const moveDist = this.speed * dt;
 
-      this.x += Math.cos( this.#angle ) * moveDist;
-      this.y += Math.sin( this.#angle ) * moveDist;
+    this.x += Math.cos( this.#angle ) * moveDist;
+    this.y += Math.sin( this.#angle ) * moveDist;
 
-      this.#tail.push( { x: this.x, y: this.y, angle: this.#angle, length: moveDist } );
-      this.#length += moveDist;
-    }
-    else {
-      this.maxLength -= this.speed * dt;
-    }
+    this.#tail.push( { x: this.x, y: this.y, angle: this.#angle, length: moveDist } );
+    this.#length += moveDist;
 
     while ( this.#length > this.maxLength && this.#tail.length > 0 ) {
       this.#length -= this.#tail.shift().length;
     }
 
     this.#bodySVG.setAttribute( 'd', this.#getDString() );
-
-    if ( this.#tail.length == 0 ) {
-      this.destroy();
-      return false;
-    }
-
-    return true;
   }
 
   drawGoalForce( goalForce ) {
@@ -243,6 +235,10 @@ function fixAngleTo( angle, otherAngle ) {
   }
 
   return angle;
+}
+
+function removeAnimatedElement( animationEvent ) {
+  animationEvent.srcElement.remove();
 }
 
 export class Apple {
