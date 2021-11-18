@@ -1,43 +1,4 @@
-<style>
-  body {
-    margin: 0;
-    overscroll-behavior: none; /* Disable Chrome two fingers back/forward swipe */
-    user-select: none;  /* Prevent accidental selection while dragging mouse */
-  }
-  svg  { width: 100%; height: 100% }
-
-  .message {
-    position: absolute;
-    top: 50%;
-    width: 100%;
-    text-align: center;
-    font-family: sans-serif;
-  }
-  #bigMessage { position: relative; font-size: 50; }
-  #littleMessage { position: relative; font-size: 30; }
-
-  .fadeIn {
-    opacity: 0%;
-    animation: fadeIn 1s linear 2s 1 forwards;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0%;   }
-    to   { opacity: 100%; }
-  }
-
-  .snake { stroke: black; stroke-width: 2; }
-  .apple { fill: red; stroke: black; stroke-width: 2; }
-
-  .snakeDeath { animation: snakeDeath 1s linear 1 forwards; }
-  @keyframes snakeDeath {
-    from { opacity: 100%; }
-    to   { opacity: 0%;   }
-  }
-
-  .goalForce { stroke: gray; stroke-width: 2; visibility: hidden; }
-  .avoidForce { stroke: black; visibility: hidden; }
-  .finalForce { stroke: green; stroke-width: 3; visibility: hidden; }
-</style>
+<link rel="stylesheet" href="snake.css">
 
 <body>
   <div class="message">
@@ -60,21 +21,21 @@
   const littleMessage = document.getElementById( 'littleMessage' );
   
   function newGame() {
+    gameState = State.Playing;
+
     bigMessage.innerText = '';
     littleMessage.innerText = '';
     littleMessage.classList.remove( 'fadeIn' );
-    gameState = State.Playing;
-
+    
     snakes.forEach( snake => snake.destroy() );
+    apples.forEach( apple => apple.destroy() );
+    clearTimeout( snakeTimer );
+    clearTimeout( appleTimer );
 
     player = new Snake();
     snakes = [ player ];
 
-    apples.forEach( apple => apple.destroy() );
     apples = [];
-
-    clearTimeout( snakeTimer );
-    clearTimeout( appleTimer );
     
     snakeTimer = setTimeout( spawnSnake, 2000 );  
 
@@ -82,6 +43,14 @@
       apples.push( new Apple() );
     }
     appleTimer = setTimeout( spawnApple, 3000 );
+  }
+
+  function gameOver() {
+    gameState = State.Lose;
+         
+    bigMessage.innerText = 'Game Over!';
+    littleMessage.innerText = 'Click to restart'
+    littleMessage.classList.add( 'fadeIn' );
   }
 
   function spawnSnake() {
@@ -121,10 +90,7 @@
         snake.kill();
 
         if ( snake == player ) {
-          bigMessage.innerText = 'Game Over!';
-          littleMessage.innerText = 'Click to restart'
-          littleMessage.classList.add( 'fadeIn' );
-          gameState = State.Lose;
+          gameOver();
         }
 
         return false;
