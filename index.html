@@ -21,8 +21,6 @@
   const littleMessage = document.getElementById( 'littleMessage' );
   
   function newGame() {
-    gameState = State.Playing;
-
     bigMessage.innerText = '';
     littleMessage.innerText = '';
     littleMessage.classList.remove( 'fadeIn' );
@@ -43,14 +41,16 @@
       apples.push( new Apple() );
     }
     appleTimer = setTimeout( spawnApple, 3000 );
+
+    gameState = State.Playing;
   }
 
   function gameOver() {
-    gameState = State.Lose;
-         
     bigMessage.innerText = 'Game Over!';
     littleMessage.innerText = 'Click to restart'
     littleMessage.classList.add( 'fadeIn' );
+
+    gameState = State.Lose;
   }
 
   function spawnSnake() {
@@ -68,11 +68,10 @@
       apples = apples.filter( apple => !snake.tryEatApple( apple ) );
 
       const avoidVectors = snake.getAvoidVectors( snakes );
-      const goalAngle = snake == player ? 
-        Math.atan2( mouseY - snake.y, mouseX - snake.x ) : 
-        snake.getGoalAngle( apples, avoidVectors );
 
-      snake.turnTowardAngle( goalAngle, dt );
+      if ( snake != player ) {
+        snake.think( apples, avoidVectors );
+      }
 
       if ( avoidVectors.every( vector => vector.dist > 0 ) ) {
         snake.update( dt );
@@ -101,7 +100,7 @@
   // Input and update loop
   //
 
-  let mouseX = 0, mouseY = 0, mouseDown = false;
+  let mouseDown = false;
   document.onmousemove = onInput;
   document.ontouchmove = onInput;
   document.onmousedown  = ( e ) => { mouseDown = true; onInput( e ); }
@@ -110,10 +109,11 @@
   document.ontouchend = ( e ) => mouseDown = false;
   function onInput( e ) {
     const event = e.touches ? e.touches[0] : e;
-    mouseX = event.pageX;
-    mouseY = event.pageY;
 
-    if ( gameState != State.Playing && mouseDown ) {
+    if ( gameState == State.Playing ) {
+      player.goalAngle = Math.atan2( event.pageY - player.y, event.pageX - player.x );
+    }
+    else if ( mouseDown ) {
       newGame();
     }
   }

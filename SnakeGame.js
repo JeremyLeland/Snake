@@ -6,7 +6,7 @@ export const Settings = {
   GoalWeight: 0.5,
   AvoidWeight: 100,
   AvoidPower: 1,
-  DrawForces: true,
+  DrawForces: false,
   MinimumAppleDist: 20,
   AppleGrowLength: 100,
 };
@@ -14,12 +14,12 @@ export const Settings = {
 export class Snake {
   x;
   y;
+  goalAngle;
+
   #angle = 0;
   #turnSpeed = 0.005;
   #tail = [];
   #length = 0;
-
-  isAlive = true;
 
   wanderX = Math.random() * window.innerWidth;
   wanderY = Math.random() * window.innerHeight;
@@ -42,6 +42,7 @@ export class Snake {
   ) {
     this.x = x;
     this.y = y;
+    this.goalAngle = angle;
     this.#angle = angle;
 
     setInterval( () => {
@@ -117,19 +118,7 @@ export class Snake {
     return vectors;
   }
 
-  turnTowardAngle( goalAngle, dt ) {
-    this.#angle = fixAngleTo( this.#angle, goalAngle );
-
-    // Turn toward goal angle
-    if ( goalAngle < this.#angle ) {
-      this.#angle = Math.max( goalAngle, this.#angle - this.#turnSpeed * dt );
-    }
-    else if ( this.#angle < goalAngle ) {
-      this.#angle = Math.min( goalAngle, this.#angle + this.#turnSpeed * dt );
-    }
-  }
-
-  getGoalAngle( apples, avoidVectors ) {
+  think( apples, avoidVectors ) {
     let closest = apples.map( 
       apple => ( { apple: apple, dist: this.distanceTo( apple ) } )
     ).reduce( 
@@ -170,7 +159,7 @@ export class Snake {
       this.#finalForceSVG.setAttribute( 'd', this.#getForceDString( finalForce ) );
     }
 
-    return Math.atan2( finalForce.y, finalForce.x );
+    this.goalAngle = Math.atan2( finalForce.y, finalForce.x );
   }
 
   tryEatApple( apple ) {
@@ -184,6 +173,16 @@ export class Snake {
   }
 
   update( dt ) {
+    // Turn toward goal angle
+    this.#angle = fixAngleTo( this.#angle, this.goalAngle );
+    if ( this.goalAngle < this.#angle ) {
+      this.#angle = Math.max( this.goalAngle, this.#angle - this.#turnSpeed * dt );
+    }
+    else if ( this.#angle < this.goalAngle ) {
+      this.#angle = Math.min( this.goalAngle, this.#angle + this.#turnSpeed * dt );
+    }
+
+    // Move forward
     const moveDist = this.speed * dt;
 
     this.x += Math.cos( this.#angle ) * moveDist;
@@ -196,6 +195,7 @@ export class Snake {
       this.#length -= this.#tail.shift().length;
     }
 
+    // Draw
     this.#bodySVG.setAttribute( 'd', this.#getDString() );
   }
 
