@@ -6,7 +6,7 @@ export const Settings = {
   GoalWeight: 0.5,
   AvoidWeight: 100,
   AvoidPower: 1,
-  DrawForces: false,
+  DrawForces: true,
   MinimumAppleDist: 20,
   AppleGrowLength: 100,
 };
@@ -55,13 +55,13 @@ export class Snake {
     this.#bodySVG.style.fill = this.#color;
     svg.appendChild( this.#bodySVG );
 
-    this.#goalForceSVG.setAttribute( 'class', 'goalForce' );
+    this.#goalForceSVG.setAttribute( 'class', 'goal' );
     svg.appendChild( this.#goalForceSVG );
 
-    this.#avoidForcesSVG.setAttribute( 'class', 'avoidForce' );
+    this.#avoidForcesSVG.setAttribute( 'class', 'avoid' );
     svg.appendChild( this.#avoidForcesSVG );
 
-    this.#finalForceSVG.setAttribute( 'class', 'finalForce' );
+    this.#finalForceSVG.setAttribute( 'class', 'final' );
     svg.appendChild( this.#finalForceSVG );
   }
 
@@ -150,21 +150,25 @@ export class Snake {
       };
     } );
 
-    this.drawAvoidForces( weighted );
-
     const goalAngle = Math.atan2( goalY - this.y, goalX - this.x );
     const goalForce = {
       x: Settings.GoalWeight * Math.cos( goalAngle ), 
       y: Settings.GoalWeight * Math.sin( goalAngle ),
     }
 
-    this.drawGoalForce( goalForce );
-
     const finalForce = weighted.reduce(
       ( acc, wv ) => ( { x: acc.x + wv.x, y: acc.y + wv.y } ),
       goalForce
     );
-    this.drawFinalForce( finalForce );
+
+    if ( Settings.DrawForces ) {
+      const len = 100 * weighted.length;
+      this.#avoidForcesSVG.setAttribute( 'd', 
+        weighted.map( wv => this.#getForceDString( wv, len ) ).join( ' ' )
+      );
+      this.#goalForceSVG.setAttribute( 'd', this.#getForceDString( goalForce ) );
+      this.#finalForceSVG.setAttribute( 'd', this.#getForceDString( finalForce ) );
+    }
 
     return Math.atan2( finalForce.y, finalForce.x );
   }
@@ -195,27 +199,10 @@ export class Snake {
     this.#bodySVG.setAttribute( 'd', this.#getDString() );
   }
 
-  drawGoalForce( goalForce ) {
-    this.#goalForceSVG.setAttribute( 'd', 
-      `M ${ this.x },${ this.y } L ${ this.x + goalForce.x * 100 },${ this.y + goalForce.y * 100 }`
-    );
+  #getForceDString( force, length = 100 ) {
+    return `M ${ this.x },${ this.y } L ${ this.x + force.x * length },${ this.y + force.y * length }`
   }
-
-  drawFinalForce( finalForce ) {
-    this.#finalForceSVG.setAttribute( 'd', 
-      `M ${ this.x },${ this.y } L ${ this.x + finalForce.x * 100 },${ this.y + finalForce.y * 100 }`
-    );
-  }
-
-  drawAvoidForces( avoidForces ) {
-    const len = 100 * avoidForces.length;
-    this.#avoidForcesSVG.setAttribute( 'd', 
-      avoidForces.map( wv => 
-        `M ${ this.x },${ this.y } L ${ this.x + wv.x * len },${ this.y + wv.y * len }`
-      ).join( ' ' )
-    );
-  }
-
+      
   #getDString() {
     if ( this.#tail.length > 0 ) {
       const leftCoords = [], rightCoords = [];

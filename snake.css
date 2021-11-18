@@ -33,6 +33,6 @@ svg  { width: 100%; height: 100% }
   to   { opacity: 0%;   }
 }
 
-.goalForce { stroke: gray; stroke-width: 2; visibility: hidden; }
-.avoidForce { stroke: black; visibility: hidden; }
-.finalForce { stroke: green; stroke-width: 3; visibility: hidden; }
+.goal { stroke: gray; stroke-width: 2; }
+.avoid { stroke: black; }
+.final { stroke: green; }
