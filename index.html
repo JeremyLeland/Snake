@@ -54,13 +54,14 @@
   const State = { Menu: 0, Playing: 1, Lose: 2 };
 
   let snakes = [], player, apples = [], gameState = State.Menu;
+  let snakeTimer, appleTimer;
 
   const bigMessage = document.getElementById( 'bigMessage' );
   const littleMessage = document.getElementById( 'littleMessage' );
   
   function newGame() {
-    bigMessage.style.visibility = 'hidden';
-    littleMessage.style.visibility = 'hidden';
+    bigMessage.innerText = '';
+    littleMessage.innerText = '';
     littleMessage.classList.remove( 'fadeIn' );
     gameState = State.Playing;
 
@@ -72,24 +73,25 @@
     apples.forEach( apple => apple.destroy() );
     apples = [];
 
-    // TODO: Reset old apple/snake spawn timers
+    clearTimeout( snakeTimer );
+    clearTimeout( appleTimer );
     
-    setTimeout( spawnSnake, 2000 );  
+    snakeTimer = setTimeout( spawnSnake, 2000 );  
 
     for ( let i = 0; i < 3; i ++ ) {
       apples.push( new Apple() );
     }
-    setTimeout( spawnApple, 3000 );
+    appleTimer = setTimeout( spawnApple, 3000 );
   }
 
   function spawnSnake() {
     snakes.push( new Snake() );
-    setTimeout( spawnSnake, 2000 * snakes.length + Math.random() * 5000 );
+    snakeTimer = setTimeout( spawnSnake, 2000 * snakes.length + Math.random() * 5000 );
   }
 
   function spawnApple() {
     apples.push( new Apple() );
-    setTimeout( spawnApple, Math.random() * 3000 );
+    appleTimer = setTimeout( spawnApple, Math.random() * 3000 );
   }
 
   function update( dt ) {
@@ -120,9 +122,7 @@
 
         if ( snake == player ) {
           bigMessage.innerText = 'Game Over!';
-          bigMessage.style.visibility = 'initial';
           littleMessage.innerText = 'Click to restart'
-          littleMessage.style.visibility = 'initial';
           littleMessage.classList.add( 'fadeIn' );
           gameState = State.Lose;
         }
