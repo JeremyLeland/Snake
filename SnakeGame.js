@@ -8,6 +8,7 @@ export const Settings = {
   AvoidPower: 1,
   DrawForces: false,
   MinimumAppleDist: 20,
+  AppleGrowLength: 100,
 };
 
 export class Snake {
@@ -65,7 +66,7 @@ export class Snake {
   }
 
   // TODO: Clean up kill vs destroy
-  destroy() {
+  remove() {
     this.#bodySVG.remove();
     this.#goalForceSVG.remove();
     this.#avoidForcesSVG.remove();
@@ -168,6 +169,16 @@ export class Snake {
     return Math.atan2( finalForce.y, finalForce.x );
   }
 
+  tryEatApple( apple ) {
+    if ( this.distanceTo( apple ) < this.size + apple.size ) {
+      this.maxLength += Settings.AppleGrowLength;
+      apple.remove();
+      return true;
+    }
+
+    return false;
+  }
+
   update( dt ) {
     const moveDist = this.speed * dt;
 
@@ -267,7 +278,7 @@ export class Apple {
     svg.appendChild( this.#svg );
   }
 
-  destroy() {
+  remove() {
     this.#svg.remove();
   }
 }

@@ -27,8 +27,8 @@
     littleMessage.innerText = '';
     littleMessage.classList.remove( 'fadeIn' );
     
-    snakes.forEach( snake => snake.destroy() );
-    apples.forEach( apple => apple.destroy() );
+    snakes.forEach( snake => snake.remove() );
+    apples.forEach( apple => apple.remove() );
     clearTimeout( snakeTimer );
     clearTimeout( appleTimer );
 
@@ -65,15 +65,7 @@
 
   function update( dt ) {
     snakes = snakes.filter( snake => {
-      apples = apples.filter( apple => {
-        if ( snake.distanceTo( apple ) < snake.size + apple.size ) {
-          snake.maxLength += 100;
-          apple.destroy();
-          return false;
-        }
-
-        return true;
-      } );
+      apples = apples.filter( apple => !snake.tryEatApple( apple ) );
 
       const avoidVectors = snake.getAvoidVectors( snakes );
       const goalAngle = snake == player ? 
@@ -111,10 +103,11 @@
 
   let mouseX = 0, mouseY = 0, mouseDown = false;
   document.onmousemove = onInput;
-  document.ontouchstart = onInput;
   document.ontouchmove = onInput;
-  document.onmousedown = ( e ) => { mouseDown = true; onInput( e ); }
-  document.onmouseup   = ( e ) => mouseDown = false;
+  document.onmousedown  = ( e ) => { mouseDown = true; onInput( e ); }
+  document.ontouchstart = ( e ) => { mouseDown = true; onInput( e ); }
+  document.onmouseup  = ( e ) => mouseDown = false;
+  document.ontouchend = ( e ) => mouseDown = false;
   function onInput( e ) {
     const event = e.touches ? e.touches[0] : e;
     mouseX = event.pageX;
