@@ -28,7 +28,7 @@ export class Snake {
   size = 10;
   maxLength = 100;
 
-  #color = `hsl( ${ Math.random() * 360 }deg, 50%, 50% )`;
+  #color = `hsl( ${ Math.random() * 360 }deg, ${ Math.random() * 50 + 25 }%, ${ Math.random() * 50 + 25 }% )`;
 
   #bodySVG = document.createElementNS( SVGNS, 'path' );
   #goalForceSVG = document.createElementNS( SVGNS, 'path' );
