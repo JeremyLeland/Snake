@@ -28,7 +28,7 @@ export class Snake {
   size = 10;
   maxLength = 100;
 
-  #color = `hsl( ${ Math.random() * 360 }deg, ${ Math.random() * 50 + 25 }%, ${ Math.random() * 50 + 25 }% )`;
+  #color = `hsl( ${ Math.random() * 360 }deg, ${ rand() * 100 }%, ${ rand() * 100 }% )`;
 
   #bodySVG = document.createElementNS( SVGNS, 'path' );
   #goalForceSVG = document.createElementNS( SVGNS, 'path' );
@@ -36,21 +36,20 @@ export class Snake {
   #finalForceSVG = document.createElementNS( SVGNS, 'path' );
 
   constructor( 
-    x = Math.random() * window.innerWidth, 
-    y = Math.random() * window.innerHeight, 
-    angle = Math.random() * Math.PI * 2,
+    x = rand() * window.innerWidth, 
+    y = rand() * window.innerHeight,
   ) {
     this.x = x;
     this.y = y;
-    this.goalAngle = angle;
-    this.#angle = angle;
+    this.goalAngle = Math.atan2( window.innerHeight / 2 - y, window.innerWidth / 2 - x );
+    this.#angle = this.goalAngle;
 
     setInterval( () => {
-      this.wanderX = Math.random() * window.innerWidth;
-      this.wanderY = Math.random() * window.innerHeight;
+      this.wanderX = rand() * window.innerWidth;
+      this.wanderY = rand() * window.innerHeight;
     }, 5000 );
 
-    this.#tail.push( { x: x, y: y, angle: angle, length: 0 } );
+    this.#tail.push( { x: x, y: y, angle: this.#angle, length: 0 } );
 
     this.#bodySVG.setAttribute( 'class', 'snake' );
     this.#bodySVG.style.fill = this.#color;
@@ -252,6 +251,8 @@ function removeAnimatedElement( animationEvent ) {
   animationEvent.srcElement.remove();
 }
 
+function rand() { return Math.random() * 0.5 + 0.25; }
+
 export class Apple {
   x;
   y;
@@ -259,8 +260,8 @@ export class Apple {
   #svg = document.createElementNS( SVGNS, 'circle' );
 
   constructor( 
-    x = Math.random() * window.innerWidth, 
-    y = Math.random() * window.innerHeight,
+    x = rand() * window.innerWidth, 
+    y = rand() * window.innerHeight,
   ) {
     this.x = x;
     this.y = y;
