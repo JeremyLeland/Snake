@@ -103,6 +103,8 @@ export class Snake {
           const angle = Math.atan2( cy, cx );
           const dist = Math.hypot( cx, cy ) - snake.size * ( index / tail.length ) - this.size;
 
+          // TODO: Make this a seperate step (part of a filter?)
+          //       Then we can apply it after adding walls and whatnot
           let angleDelta = Math.abs( fixAngleTo( angle, this.#angle ) - this.#angle );
 
           if ( angleDelta > Math.PI / 2) {
@@ -114,6 +116,12 @@ export class Snake {
         }
       } );
     } );
+
+    // Hardcode walls at edge of screen for now
+    vectors.push( { angle:  0,            dist: this.x - this.size } );
+    vectors.push( { angle:  Math.PI / 2,  dist: this.y - this.size } );
+    vectors.push( { angle:  Math.PI,      dist: window.innerWidth  - this.x - this.size } );
+    vectors.push( { angle: -Math.PI / 2,  dist: window.innerHeight - this.y - this.size } );
 
     return vectors;
   }
@@ -130,7 +138,7 @@ export class Snake {
     const goalX = closest.apple?.x ?? this.wanderX;
     const goalY = closest.apple?.y ?? this.wanderY;
 
-    // Try to avoid other thiss
+    // Try to avoid other snakes
     const weighted = avoidVectors.map( vector => {
       const weightedDist = Math.abs( Settings.AvoidWeight / Math.pow( vector.dist, Settings.AvoidPower ) );
       return { 
